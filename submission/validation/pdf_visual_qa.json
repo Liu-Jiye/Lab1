@@ -1,0 +1,12 @@
+{
+  "file": "report/lab_report.pdf",
+  "pages": 9,
+  "all_pages_rendered": true,
+  "all_pages_visually_inspected": true,
+  "corrections": [
+    "Removed isolated paragraph continuation pages",
+    "Balanced MOEA/D source appendix pages",
+    "Improved HV axis labels and source font size"
+  ],
+  "final_check": "No clipped text, overlapping objects or orphan continuation pages observed."
+}

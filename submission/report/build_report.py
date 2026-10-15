@@ -1,0 +1,121 @@
+"""Rebuild plots and the assessed PDF directly from saved experimental data."""
+from pathlib import Path
+import json, html, textwrap
+import numpy as np
+from scipy.io import loadmat
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, Preformatted
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+R=Path(__file__).resolve().parents[1]; D=R/'report'; D.mkdir(exist_ok=True)
+s=json.loads((R/'results/summary.json').read_text()); a=json.loads((R/'validation/independent_audit.json').read_text()); u=json.loads((R/'validation/hv_upper_bound.json').read_text())
+g=loadmat(R/'results/ga_results.mat',simplify_cells=True); m=loadmat(R/'results/moead_results.mat',simplify_cells=True); p=loadmat(R/'results/pareto_typical.mat',simplify_cells=True)
+plt.rcParams.update({'font.size':10,'axes.spines.top':False,'axes.spines.right':False,'figure.dpi':160})
+x=np.asarray(g['evaluationHistory']); H=np.asarray(g['histories']); med=np.median(H,axis=1)
+fig,ax=plt.subplots(1,2,figsize=(10,3.4))
+for h in H.T: ax[0].plot(x,np.where(np.isfinite(h),h,np.nan),color='#9ab9cf',alpha=.35,lw=.7)
+ax[0].plot(x,np.where(np.isfinite(med),med,np.nan),color='#124d72',lw=2,label='Median of all 20 runs')
+ax[0].axhline(17.0014,color='#b25232',ls='--',lw=1,label='Assignment reference')
+ax[0].set(xlabel='Candidate evaluations (including initialization)',ylabel='Best feasible total power',title='GA convergence'); ax[0].legend(fontsize=8)
+valid=np.isfinite(med); ax[1].semilogy(x[valid],np.maximum(med[valid]-u['minimum_power_lp'],1e-12),color='#124d72',lw=2)
+ax[1].set(xlabel='Candidate evaluations',ylabel='Median power minus independent LP optimum',title='Convergence detail (log scale)'); fig.tight_layout(); fig.savefig(D/'ga_convergence.png'); plt.close(fig)
+fig,ax=plt.subplots(1,2,figsize=(10,3.4))
+for k,r in enumerate(m['moeadRuns']):
+    q=r['paretoFront']; ax[0].plot(q[:,0],q[:,1],lw=.8,alpha=.6,label=f"Run {k+1}: HV={r['hv']:.5f}")
+    ax[1].plot(201*(1+np.arange(len(r['hvHistory']))),r['hvHistory'],label=f'Run {k+1}')
+q=p['paretoFront']; ax[0].scatter(q[::max(1,len(q)//90),0],q[::max(1,len(q)//90),1],s=7,color='black',label=f"Typical: run {s['typicalIndex']}")
+ax[0].set(xlabel='f1: total transmit power (minimize)',ylabel='f2: negative sum-rate (minimize)',title='Strictly feasible nondominated archives'); ax[0].legend(fontsize=7)
+ax[1].set(xlabel='Candidate evaluations',ylabel='Hypervolume, reference [26, 0]',title='MOEA/D archive convergence'); ax[1].set_xticks([0,50000,100000,150000,200000],['0','50k','100k','150k','200k']); ax[1].legend(fontsize=8); fig.tight_layout(); fig.savefig(D/'moead_front_hv.png'); plt.close(fig)
+styles=getSampleStyleSheet(); styles['BodyText'].fontSize=9; styles['BodyText'].leading=12; styles['BodyText'].spaceAfter=6
+styles.add(ParagraphStyle(name='CaptionX',parent=styles['BodyText'],fontSize=8.3,leading=11,textColor=colors.HexColor('#42596a')))
+styles.add(ParagraphStyle(name='CodeX',fontName='Courier',fontSize=7.5,leading=10))
+story=[]
+def P(t,style='BodyText'): story.append(Paragraph(t,styles[style]))
+def title(t): P(t,'Heading1')
+def sub(t): P(t,'Heading2')
+def table(rows,widths=None):
+    rows=[[Paragraph(html.escape(str(c)),styles['BodyText']) for c in row] for row in rows]
+    z=Table(rows,colWidths=widths,repeatRows=1,hAlign='LEFT'); z.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#e7eff5')),('VALIGN',(0,0),(-1,-1),'TOP'),('LINEBELOW',(0,0),(-1,0),.6,colors.HexColor('#54748b')),('BOTTOMPADDING',(0,0),(-1,-1),4),('TOPPADDING',(0,0),(-1,-1),3)])); story.append(z); story.append(Spacer(1,8))
+def pic(name,caption): story.append(Image(str(D/name),width=490,height=167)); P(caption,'CaptionX')
+def page(): story.append(PageBreak())
+P('STANFORD POWER CONTROL','Title'); P('Lab 1 | Genetic Algorithm and MOEA/D','Heading2'); P('Reproducible experimental report | MATLAB R2024b | 15 October 2026')
+P('Author / repository: Liu-Jiye / Lab1. All assessed deliverables are isolated in submission/. The original assignment and starter functions are retained separately in docs/ and src/.')
+title('Abstract')
+P(f"A real-coded GA was constructed from Sheffield GA Toolbox operators, and MOEA/D-DE was implemented directly. All 20 independent GA runs are strictly feasible after 50,000 candidate evaluations each. The median total power is {a['ga_median']:.10f}; the sample standard deviation is {a['ga_sample_std']:.3g}. Three independent MOEA/D runs produce a median hypervolume of {s['typicalHV']:.8f}, using the prescribed minimization reference [26, 0]. The typical archive contains {s['paretoCount']} feasible, mutually nondominated power vectors. Saved outputs pass both MATLAB verification and independent NumPy objective, feasibility, nondomination and hypervolume checks.")
+P('The experiments use random initialization, fixed independent seeds, feasibility-first comparison and an objective-free segment repair. No known optimum, LP solution, CVX solution or independently optimized rate sample is injected into either evolutionary search. Independent LP and numerical hypervolume bounds are used only after experiments for validation.')
+title('1. Model and vectorized evaluators')
+P('There are five cochannel transmitter-receiver pairs. G(i,j) is the gain from transmitter j to receiver i; noise is 0.5 on every receiver. All powers satisfy 0.1 &lt;= P_i &lt;= 5. SINR values are linear, and rates are spectral efficiencies in bit/s/Hz under log2(1+SINR).')
+story.append(Preformatted('G = [1 .1 .2 .1 0;\n     .1 1 .1 .1 0;\n     .2 .1 2 .2 .2;\n     .1 .1 .2 1 .1;\n     0 0 .2 .1 1];',styles['CodeX']))
+P('Define D = diag(diag(G)), H = G-D. For candidate P, SINR_i = G_ii P_i / (0.5 + sum_(j!=i) G_ij P_j), and c_i = 1/SINR_i - 0.5 &lt;= 0. Task 1 minimizes f1 = sum_i P_i. Task 2 minimizes [f1, f2], where f2 = -sum_i log2(1+SINR_i). A lower f2 means higher sum-rate.')
+table([['Interface','Input','Output'],['power_objective','N x 5 population','N x 1 total powers'],['power_constraints','N x 5 population','N x 5 inequalities; [] equalities; N x 5 SINR'],['evaluate_population','N x 5 population','N x 2 objectives, constraints, SINR, violation, feasible mask']],[130,120,240])
+P('The evaluators reject nonreal, nonfinite, nonpositive or incorrectly shaped inputs. Bounds are checked separately in evaluate_population. Matrix multiplication uses H transpose to respect receiver-row convention, even though the supplied G happens to be symmetric.')
+story.append(Preformatted('interference = X * H.\' + 0.5;\nsinrValue = (X .* diag(G).\') ./ interference;\nconstraint = 1 ./ sinrValue - 0.5;\nf1 = sum(X,2); f2 = -sum(log2(1+sinrValue),2);',styles['CodeX']))
+page(); title('2. Constraint handling and evaluation accounting')
+P('Strict feasibility requires all five c_i &lt;= 0 and every bound satisfied. For MOEA/D, an inward c_i &lt;= -1e-12 acceptance margin avoids scalar-versus-batch floating-point ambiguity at SINR=2. No 1e-4 relaxation is used, although the assignment rubric permits that violation threshold. Infeasible candidates are ranked by V = sum(max(c_i,0)) plus summed positive bound violations. Any feasible candidate outranks any infeasible one. Feasible GA candidates compare f1; feasible MOEA/D candidates compare their scalar subproblem values. Thus no penalty coefficient needs tuning.')
+sub('2.1 Objective-free segment repair')
+P('For positive powers the SINR constraints are exactly linear: A P &lt;= b, with A = 2H-D and b = -ones(5,1). Let p be a feasible parent and y a bound-clipped trial. For d = y-p, feasibility of p+alpha*d requires alpha &lt;= (b_k-A_k p)/(A_k d) whenever A_k d &gt; 0. The repair sets alpha to the minimum of these ratios and 1, clipped below by zero. If alpha &lt; 1, multiply alpha by 0.98 to retain interior slack. Bounds remain satisfied by convexity.')
+P('Repair is enabled only after a naturally evaluated feasible candidate exists. The selected feasible parent is the anchor, or an existing feasible population member is selected uniformly when that parent is infeasible. Before then, feasibility-first evolution must find feasibility. Repair neither evaluates an objective nor solves an optimization problem. The 0.98 contraction balances numerical interior slack against access to constraint boundaries; shrinking variation still permits arbitrarily close approach to the optimum.')
+sub('2.2 Budget and history conventions')
+P('One evaluation means one candidate power vector jointly evaluated for objectives and constraints. Initial candidates, all children, duplicates and repaired children count. Cached parent values are reused. GA uses 200 initial candidates plus 249 batches of 200 = 50,000. Post-search result recomputation and separate validation are not search evaluations. Every generation has a saved best feasible value; before feasibility this value is Inf. Medians include all 20 histories, preserving Inf rather than dropping failed runs. The first-feasible count records the actual individual index within the first successful batch.')
+title('3. Task 1: GA construction and parameter rationale')
+table([['Parameter','Value and rationale'],['Representation / initialization','Five real powers; independent uniform [0.1,5] initialization.'],['Population / survival','200; (mu+lambda) elitist survival retains progress while evaluating exactly 200 children per generation.'],['Selection','Toolbox ranking with pressure 1.8 then SUS; stable selection pressure without objective-scale dependence.'],['Recombination','Toolbox extended intermediate recint; explicit probability 0.9. Its own crossover argument is ignored by the toolbox implementation.'],['Mutation','Toolbox mutbga, per-variable probability 0.2 = 1/5. Shrink = max(0.002,(1-(generation-1)/250)^2).'],['Constraint handling','Feasibility-first ordering, total positive violation, segment repair contraction 0.98.'],['Runs / budget','Seeds 11001 to 11020; 50,000 candidates per run including initialization.']],[135,355])
+P('Early variation explores broadly; the quadratic mutation shrink supports final precision while its nonzero floor prevents complete mutation freeze. Elitism protects feasible improvements. A separate pilot (seed 9101, excluded from statistics) confirmed these choices before the formal seeds were run. This is a reasoned parameter choice, not evidence of an exhaustive tuning study.')
+P('The driver directly calls ranking, sus, recint and mutbga from the external toolbox. It does not call MATLAB ga, gamultiobj, or any CVX optimizer. Tool source and the inaccessible course download are disclosed in Section 7.')
+page(); title('4. GA results: 20 independent runs')
+v=s['ga']; table([['Statistic (strictly feasible final runs only)','Measured value'],['Best',f"{v['best']:.12f}"],['Worst',f"{v['worst']:.12f}"],['Mean',f"{v['mean']:.12f}"],['Median',f"{v['median']:.12f}"],['Sample standard deviation (n-1)',f"{v['std']:.12g}"],['Feasible-run rate','20 / 20 = 100%'],['Median first-feasible evaluations (all 20)',str(v['medianFirstFeasibleEvaluations'])],['|Median - 17.0014|',f"{abs(v['median']-17.0014):.12g} < 0.10"]],[290,200])
+pic('ga_convergence.png','Figure 1. Every-generation best feasible histories (light), median across all 20 runs (dark), and reference power. Right: median optimality gap relative to a separate LP validation, never used by GA. Infinite pre-feasibility values are retained in data and omitted only from drawing finite coordinates.')
+P('All runs satisfy c_i &lt;= 0 and SINR_i &gt;= 2 on recomputation. The worst final objective is still within about 1.2e-5 of the independent LP minimum. The objective statistics use only the 20 feasible final solutions; no infeasible low-power candidate enters the table. The median difference from the assignment reference satisfies the highest numerical result bracket.')
+page(); title('4.1 Per-run GA evidence'); rows=[['Run / seed','Final total power','First feasible eval.','max c_i']]
+for k,r in enumerate(g['gaRuns']): rows.append([f"{k+1:02d} / {r['seed']}",f"{r['objective']:.10f}",int(r['firstFeasibleEvaluations']),f"{np.max(r['constraints']):.3e}"])
+table(rows,[95,150,130,115])
+page(); title('5. Task 2: self-implemented MOEA/D-DE')
+P('The algorithm decomposes the minimization problem into 201 scalar subproblems. Weights are w_i = [(i-1)/200, 1-(i-1)/200], including both endpoints. Each neighborhood contains the 20 closest weights by Euclidean distance (equivalently their first-coordinate distance). The ideal point z starts at the componentwise minimum of the evaluated initial population and is updated on every feasible child. Initially infeasible objective minima may remain as an optimistic lower ideal; no feasible comparison ever permits an infeasible replacement.')
+P('The scalar value for subproblem i is g_i(f) = max_j {max(w_ij,1e-6) * |f_j-z_j| / s_j}, with fixed scales s = [8,1.5]. These scales roughly match changes in total power and negative rate, preventing power magnitude from overwhelming the rate objective. The small weight floor keeps endpoint subproblems sensitive to both objectives.')
+table([['Parameter','Value / reason'],['Population and weights','201 evenly spaced weights; fine front coverage with endpoints.'],['Generations / evaluations','1,000; 201 + 201*1,000 = 201,201 candidates per run.'],['Neighborhood / local mating','20; choose neighborhood with probability 0.9, otherwise all subproblems.'],['Differential variation','DE/rand/1/bin; F = 0.5; CR = 0.9; three distinct sampled parents; at least one mutant coordinate.'],['Polynomial mutation','Per-variable probability 0.2, distribution index eta = 20; bounded to [0.1,5].'],['Replacement','Feasibility-first; scalar comparison for feasible pairs; total violation for infeasible pairs; at most 2 replacements per child.'],['External archive','All evaluated strictly feasible nondominated points, deduplicated in objective space; no archive-size truncation.'],['Formal independence','Seeds 21001, 21002, 21003; entirely separate initialization and RNG state.']],[145,345])
+P('Local mating promotes neighboring trade-offs; occasional global mating reduces neighborhood isolation. Limiting replacement to two avoids a single child homogenizing the population. A pilot with 101 weights and 150 generations (seed 9201) checked feasibility and HV behavior. Formal settings increase front density and allow convergence; no pilot output enters the reported archives.')
+sub('5.1 Main loop and archive')
+P('For each generation, visit subproblems in random order. Choose the mating pool; form a DE child; bound it; apply polynomial mutation and optional segment repair; evaluate once; update the feasible ideal; visit a shuffled replacement pool and replace at most two solutions under feasibility-first scalar comparison. After the generation, merge all feasible children into the archive and retain only unique nondominated objectives, preserving the matching power rows. Archive entries are evaluated candidates, rather than artificial interpolations. Full commented MOEA/D source is reproduced in Appendix A.')
+sub('5.2 Exact two-dimensional HV')
+P('Both objectives are minimized. With nondominated points sorted by increasing x=f1 and decreasing y=f2, reference r=[26,0], set y_0=0 and compute HV = sum_i (26-x_i)*(y_(i-1)-y_i). This measures the union of rectangles without double counting. Points outside the reference rectangle are filtered; an empty feasible archive has HV=0. A second implementation independently integrates horizontal strips and agrees within 1e-9.')
+page(); title('6. MOEA/D results and front quality')
+rows=[['Run','Seed','Hypervolume','Archive K','Evaluations']]
+for k,r in enumerate(m['moeadRuns']): rows.append([k+1,r['seed'],f"{r['hv']:.10f}",len(r['paretoFront']),r['evaluations']])
+table(rows,[45,65,155,95,130])
+P(f"The median-HV run is run {s['typicalIndex']} (seed {s['typicalSeed']}); HV = {s['typicalHV']:.10f}. It is selected by sorting all three final HV values and choosing the middle run, rather than the largest. Its MAT file contains paretoSet ({len(q)} x 5) and paretoFront ({len(q)} x 2), together with referencePoint, typicalIndex, typicalSeed and typicalHV.")
+pic('moead_front_hv.png','Figure 2. Objective axes follow the required minimization convention. All three archives are overlaid, with sampled markers identifying the typical run. HV history includes initialization and each complete generation.')
+q=p['paretoFront']; X=p['paretoSet']; G=np.array([[1,.1,.2,.1,0],[.1,1,.1,.1,0],[.2,.1,2,.2,.2],[.1,.1,.2,1,.1],[0,0,.2,.1,1]])
+S=X*np.diag(G)/(.5+X@(G-np.diag(np.diag(G))).T)
+table([['Typical archive diagnostic','Value'],['Total-power range',f'{q[:,0].min():.8f} to {q[:,0].max():.8f}'],['Sum-rate range',f'{(-q[:,1]).min():.8f} to {(-q[:,1]).max():.8f}'],['Power coordinate range',f'{X.min():.10f} to {X.max():.10f}'],['Minimum SINR across every saved point/link',f'{S.min():.12f}'],['Mutual nondomination / objective agreement','Independently verified for all points']],[290,200])
+P('The trade-off is physically consistent: higher feasible transmit power allows greater total rate, but interference and per-link QoS constraints limit the gain. All archives are mutually nondominated internally; finite evolutionary archives approximate the true Pareto set and do not prove global Pareto optimality of every point.')
+sub('6.1 Evidence relative to the HV rubric')
+P(f"The instructor reference front is not supplied. A separate numerical upper-bound diagnostic gives HV_upper = {u['true_hv_upper_bound_numerical']:.10f}, and typical HV / HV_upper = {u['student_hv_over_upper_bound']:.6%}. This strongly supports the rubric's 0.90 quality target for a valid feasible reference front, but is not a measured ratio against the unpublished instructor file and is not a guaranteed grade.")
+P('The bound uses an independent LP minimum-power value to establish the left integration limit. At each 0.05 power bin, LP bounds each interference over the feasible polytope with a power cap. The convex -log2(interference) term is upper bounded by its secant chord; log2(total received power) remains concave. A tangent affine function globally upper bounds that concave majorant, and an LP maximizes the tangent. Right-endpoint rectangles bound the integral of attainable rate versus power, including the final interval up to reference power 26. All calculations use floating-point tolerances and explicit padding, not interval arithmetic. These diagnostic samples never enter the GA or MOEA/D.')
+page(); title('7. Verification, provenance and reproduction')
+P('MATLAB validate_implementation compares vectorized results with an independent nested-loop oracle on 37 random candidates, checks output dimensions and malformed input handling, verifies HV=36 for the hand case [(2,-3),(4,-5)] with reference [10,0], and checks empty, duplicate and dominated-point handling. It also verifies 1,000 segment repairs from a test-only feasible fixture. The fixture is never supplied to the experimental optimizers. Maximum evaluator oracle error is 8.88e-16.')
+P('verify_results reloads every saved run and checks strict feasibility, budgets, objective consistency, monotone best-so-far/HV histories, nondomination and median-run selection. independent_audit.py repeats objective/SINR calculations in NumPy, uses pairwise domination tests rather than the MATLAB scan, and a different HV strip formula. Both audit JSON files report passed=true. An initial boundary-roundoff audit failure was resolved by adding the inward 1e-12 margin and repeating the three MOEA/D runs with unchanged seeds and budgets; only these final validated runs are submitted. All 20 GA runs and all three MOEA/D archives are covered.')
+sub('7.1 Toolbox and source disclosure')
+P('The course SharePoint GA Toolbox links returned HTTP 403 in this environment. The experiment therefore uses the public Sheffield Genetic Algorithm Toolbox mirror https://github.com/sumatrae/gatbx, commit 0cd0a5612edd6b0d5d97214927d1452fbac46986. Its identity with the course download has not been verified. MATLAB required changing external .M extensions to .m; operator content was not modified. No unmodified toolbox files are submitted, in accordance with the assignment. This provenance caveat must be checked if the course requires a specific distribution.')
+P('The GA driver, MOEA/D implementation, vectorized evaluators, repair, archives, validation and report were prepared for this submission with OpenAI Codex assistance. The original starter files are retained unchanged in src/. No Stanford CVX solver has been adapted as the GA solution. The independent SciPy LP/SLSQP diagnostic is isolated in validation/ and never called by the MATLAB optimizers.')
+sub('7.2 Reproduction and files')
+story.append(Preformatted("cd('path/to/Lab1');\naddpath('submission/matlab');\nrun_all('path/to/external/gatbx');\n% Verify saved data without rerunning searches:\nverify_results();",styles['CodeX']))
+P('Run Python independent_audit.py and hv_upper_bound.py under submission/validation/, then report/build_report.py to rebuild this document and figures. Python dependencies: numpy, scipy, matplotlib, reportlab; PyMuPDF is used for PDF visual inspection. The build script reads saved MAT/JSON evidence and does not run optimization. Full instructions and scoring-item mapping are in submission/README.md and validation/rubric-checklist.md.')
+table([['Assessed deliverable','Location relative to submission/'],['Vectorized evaluators / commented algorithms','matlab/*.m'],['20 GA histories / outputs / statistics','results/ga_results.mat; ga_run_01..20.mat; CSV/JSON'],['3 MOEA/D archives / histories','results/moead_results.mat; moead_run_01..03.mat'],['Required typical Pareto set/front MAT','results/pareto_typical.mat'],['PDF report and figures','report/lab_report.pdf; *.png'],['Verification and provenance','validation/*']],[210,280])
+sub('References')
+P('[1] Supplied Lab - Stanford Power Control (1).docx: tasks, data and marking rubric. [2] Sheffield Genetic Algorithm Toolbox, public mirror cited above; operator documentation in external source. [3] Q. Zhang and H. Li, MOEA/D: A Multiobjective Evolutionary Algorithm Based on Decomposition, IEEE TEC 11(6), 2007, DOI: 10.1109/TEVC.2007.892759. [4] K. Deb, An efficient constraint handling method for genetic algorithms, CMAME 186, 2000, DOI: 10.1016/S0045-7825(99)00389-8. [5] Stanford/CVX power-control example, background only: cvxr.com/cvx/examples/gp_tutorial/html/power_control.html.')
+page(); title('Appendix A. Complete commented MOEA/D source')
+P('The following source is identical to matlab/run_moead.m, including the local bounded polynomial mutation function. Supporting objective, repair, nondomination and HV routines are submitted alongside it.')
+lines=(R/'matlab/run_moead.m').read_text().splitlines()
+for start in range(0,len(lines),45):
+    if start: page(); title('Appendix A. MOEA/D source (continued)')
+    wrapped=[]
+    for i,line in enumerate(lines[start:start+45],start+1):
+        parts=textwrap.wrap(line,102,replace_whitespace=False,drop_whitespace=False) or ['']
+        wrapped.append(f'{i:03d} '+parts[0]); wrapped.extend('    '+z for z in parts[1:])
+    story.append(Preformatted('\n'.join(wrapped),styles['CodeX']))
+def footer(c,doc):
+    c.setStrokeColor(colors.HexColor('#ced9e1')); c.line(52,40,543,40); c.setFont('Helvetica',8); c.setFillColor(colors.HexColor('#526574')); c.drawString(52,28,'Liu-Jiye | Stanford Power Control | Lab 1'); c.drawRightString(543,28,str(doc.page))
+SimpleDocTemplate(str(D/'lab_report.pdf'),pagesize=(595.28,841.89),rightMargin=52,leftMargin=52,topMargin=45,bottomMargin=52,title='Stanford Power Control: GA and MOEA/D',author='Liu-Jiye').build(story,onFirstPage=footer,onLaterPages=footer)
+print('Created',D/'lab_report.pdf')

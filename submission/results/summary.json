@@ -1,0 +1,32 @@
+{
+  "ga": {
+    "best": 17.00136460736616,
+    "worst": 17.001374901601672,
+    "mean": 17.001367809849889,
+    "median": 17.001367487496537,
+    "std": 2.6540867005189866E-6,
+    "feasibleRuns": 20,
+    "totalRuns": 20,
+    "medianFirstFeasibleEvaluations": 1619
+  },
+  "moeadHV": [
+    73.839825080715357,
+    73.84433909246394,
+    73.8399394752679
+  ],
+  "typicalIndex": 3,
+  "typicalSeed": 21003,
+  "typicalHV": 73.8399394752679,
+  "paretoCount": 5811,
+  "matlabVersion": "24.2.0.2712019 (R2024b)",
+  "gaOptions": {
+    "population": 200,
+    "budget": 50000
+  },
+  "moeadOptions": {
+    "population": 201,
+    "generations": 1000,
+    "neighborhood": 20
+  },
+  "timestamp": "2026-10-15 12:07:09"
+}
