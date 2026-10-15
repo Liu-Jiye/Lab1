@@ -1,0 +1,9 @@
+# MATLAB autosaves and local editor/OS files
+*.asv
+*.m~
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+
+# Keep required MAT results and PDF reports trackable.
