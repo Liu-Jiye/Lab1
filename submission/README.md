@@ -1,3 +1,5 @@
+> Historical archive. Use the final [course-toolbox submission](../submission_course_toolbox/), with all experiments freshly rerun.
+
 # 实验提交包
 
 本目录是单独整理的提交材料，原始题目与起始代码保留在仓库的 `docs/` 与 `src/`。

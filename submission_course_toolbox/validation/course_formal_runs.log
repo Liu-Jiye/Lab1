@@ -1,0 +1,56 @@
+Course toolbox exact-byte and MATLAB-resolution checks PASSED.
+Implementation tests PASSED. Max oracle error 8.88e-16
+GA 01 seed 11001 f 17.0013684033 maxC -2.31e-09 evals 50000 first 1605
+GA 02 seed 11002 f 17.0013685580 maxC -2.72e-10 evals 50000 first 1636
+GA 03 seed 11003 f 17.0013651253 maxC -6.66e-10 evals 50000 first 1966
+GA 04 seed 11004 f 17.0013678658 maxC -1.2e-09 evals 50000 first 1219
+GA 05 seed 11005 f 17.0013673481 maxC -2.1e-09 evals 50000 first 1363
+GA 06 seed 11006 f 17.0013674297 maxC -5.15e-10 evals 50000 first 2186
+GA 07 seed 11007 f 17.0013648079 maxC -1.06e-10 evals 50000 first 1604
+GA 08 seed 11008 f 17.0013650215 maxC -8.83e-10 evals 50000 first 1646
+GA 09 seed 11009 f 17.0013688153 maxC -1.34e-09 evals 50000 first 1079
+GA 10 seed 11010 f 17.0013684443 maxC -1.38e-09 evals 50000 first 1840
+GA 11 seed 11011 f 17.0013646074 maxC -2.78e-10 evals 50000 first 2978
+GA 12 seed 11012 f 17.0013704540 maxC -1.35e-09 evals 50000 first 1207
+GA 13 seed 11013 f 17.0013675453 maxC -9.29e-10 evals 50000 first 1633
+GA 14 seed 11014 f 17.0013655673 maxC -6.78e-10 evals 50000 first 1781
+GA 15 seed 11015 f 17.0013716260 maxC -1.3e-09 evals 50000 first 1217
+GA 16 seed 11016 f 17.0013663128 maxC -1.05e-09 evals 50000 first 1668
+GA 17 seed 11017 f 17.0013749016 maxC -3.78e-09 evals 50000 first 1352
+GA 18 seed 11018 f 17.0013653486 maxC -3.96e-10 evals 50000 first 1722
+GA 19 seed 11019 f 17.0013669110 maxC -1.1e-09 evals 50000 first 1464
+GA 20 seed 11020 f 17.0013711038 maxC -3.65e-08 evals 50000 first 1381
+MOEAD seed 21001 generation 100 HV 73.82411665 archive 1147
+MOEAD seed 21001 generation 200 HV 73.83506397 archive 1771
+MOEAD seed 21001 generation 300 HV 73.83661098 archive 2073
+MOEAD seed 21001 generation 400 HV 73.83747516 archive 2583
+MOEAD seed 21001 generation 500 HV 73.83800317 archive 2997
+MOEAD seed 21001 generation 600 HV 73.83844096 archive 3337
+MOEAD seed 21001 generation 700 HV 73.83884717 archive 3608
+MOEAD seed 21001 generation 800 HV 73.83921732 archive 3848
+MOEAD seed 21001 generation 900 HV 73.83950498 archive 3899
+MOEAD seed 21001 generation 1000 HV 73.83982508 archive 3964
+MOEAD 1 HV 73.8398250807 points 3964 evals 201201
+MOEAD seed 21002 generation 100 HV 73.83482738 archive 1057
+MOEAD seed 21002 generation 200 HV 73.83987403 archive 1835
+MOEAD seed 21002 generation 300 HV 73.84137768 archive 2329
+MOEAD seed 21002 generation 400 HV 73.84208595 archive 2621
+MOEAD seed 21002 generation 500 HV 73.84264171 archive 2945
+MOEAD seed 21002 generation 600 HV 73.84313962 archive 3457
+MOEAD seed 21002 generation 700 HV 73.84349100 archive 3880
+MOEAD seed 21002 generation 800 HV 73.84375341 archive 3890
+MOEAD seed 21002 generation 900 HV 73.84407167 archive 4084
+MOEAD seed 21002 generation 1000 HV 73.84433909 archive 4155
+MOEAD 2 HV 73.8443390925 points 4155 evals 201201
+MOEAD seed 21003 generation 100 HV 73.82662124 archive 1076
+MOEAD seed 21003 generation 200 HV 73.83059172 archive 1947
+MOEAD seed 21003 generation 300 HV 73.83393720 archive 2730
+MOEAD seed 21003 generation 400 HV 73.83879449 archive 3519
+MOEAD seed 21003 generation 500 HV 73.83917469 archive 4142
+MOEAD seed 21003 generation 600 HV 73.83941216 archive 4658
+MOEAD seed 21003 generation 700 HV 73.83956766 archive 5026
+MOEAD seed 21003 generation 800 HV 73.83971842 archive 5450
+MOEAD seed 21003 generation 900 HV 73.83983286 archive 5655
+MOEAD seed 21003 generation 1000 HV 73.83993948 archive 5811
+MOEAD 3 HV 73.8399394753 points 5811 evals 201201
+Saved-results audit PASSED. GA median error 0.0000325125; HV 73.8399394753
