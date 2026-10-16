@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "courseToolboxVerified": true,
+  "gaRuns": 20,
+  "moeadRuns": 3,
+  "strictFeasible": true,
+  "medianGAError": 3.2512503462811537E-5,
+  "typicalHV": 73.8399394752679,
+  "typicalParetoRows": 5811,
+  "matlabVersion": "24.2.0.2712019 (R2024b)"
+}

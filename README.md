@@ -1,5 +1,7 @@
 # Stanford five-link power control lab
 
+**Ready to hand in: [final_submission.zip](final_submission.zip)** | [Browse all packaged files](final_submission/) | [Five-requirement mapping](final_submission/README.md). The ZIP contains the complete final submission folder, with no unmodified toolbox source files.
+
 **Final course-toolbox submission: [submission_course_toolbox/](submission_course_toolbox/).** All 20 GA and three MOEA/D experiments were freshly executed. GA directly uses the supplied course toolbox; original file SHA-256 and MATLAB resolution checks passed.
 
 - [PDF report](submission_course_toolbox/report/lab_report.pdf)

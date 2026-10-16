@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "source": "User-supplied course GA Toolbox",
+  "operators": {
+    "ranking": {
+      "path": "C:\\Users\\25735\\Downloads\\OneDrive_1_2026-10-15\\ranking.m",
+      "sha256": "90523e59f9863d00812e95c0952b04e2064d7e08ca14dfa3830770cf580bb0bb",
+      "bytes": 4709
+    },
+    "sus": {
+      "path": "C:\\Users\\25735\\Downloads\\OneDrive_1_2026-10-15\\sus.m",
+      "sha256": "2b10ad5906524d4e218787b0fb5d1f3c52c24cc66dc847d05fd714d0f0b01d9a",
+      "bytes": 1319
+    },
+    "recint": {
+      "path": "C:\\Users\\25735\\Downloads\\OneDrive_1_2026-10-15\\recint.m",
+      "sha256": "f28039ff4addb00e9527bb5c81eb6c73fdf542b9ebe15a9b929cca771cf5cd0b",
+      "bytes": 1895
+    },
+    "mutbga": {
+      "path": "C:\\Users\\25735\\Downloads\\OneDrive_1_2026-10-15\\mutbga.m",
+      "sha256": "b9fe17257bc5a3c5ee901553861c8a13ca51711984d5e24a9dc8d76b391ddf53",
+      "bytes": 4943
+    },
+    "rep": {
+      "path": "C:\\Users\\25735\\Downloads\\OneDrive_1_2026-10-15\\rep.m",
+      "sha256": "78ec47d1d557452415eae600d8b8bfb01621fc1a319e1f8c8e62d45b887ef7c7",
+      "bytes": 1208
+    }
+  },
+  "linearRankingArguments": [
+    1.8,
+    0
+  ],
+  "matlabVersion": "24.2.0.2712019 (R2024b)"
+}

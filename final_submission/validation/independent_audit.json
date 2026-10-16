@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "course_toolbox_verified": true,
+  "ga_runs": 20,
+  "ga_min": 17.00136460736616,
+  "ga_max": 17.00137490160167,
+  "ga_mean": 17.00136780984989,
+  "ga_median": 17.001367487496537,
+  "ga_sample_std": 2.6540867005189866e-06,
+  "median_first_feasible": 1619.0,
+  "moead_hv": [
+    73.83982508071534,
+    73.84433909246388,
+    73.83993947526787
+  ],
+  "pareto_counts": [
+    3964,
+    4155,
+    5811
+  ],
+  "minimum_pareto_sinr": [
+    2.000000000004,
+    2.000000000004,
+    2.0000000000040004
+  ],
+  "checks": [
+    "course operator SHA-256 and runtime resolution",
+    "independent SINR/objective recomputation",
+    "strict feasibility",
+    "pairwise nondomination",
+    "alternative HV strip integration",
+    "run count and budgets",
+    "GA monotone best-so-far history",
+    "median-HV typical selection"
+  ]
+}
